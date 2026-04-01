@@ -6,7 +6,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.chat.Chat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +14,11 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import me.clip.placeholderapi.PlaceholderAPI;
 
 
 // TODO
@@ -152,15 +154,9 @@ public class Main extends JavaPlugin implements Listener {
 	}
 
 	public static String replaceVariable(String line) {
-		// if line contains a key from ServerVariableKeys (line has discord written in it)
-		if (Arrays.stream(SERVER_VARIABLE_KEYS.toArray(new String[SERVER_VARIABLE_KEYS.size()])).anyMatch(line::contains)) {
-
-			//loop through keys, and if the line contains %TYPE%, replace it
-			for (String key : SERVER_VARIABLE_KEYS) {
-				if(line.contains("%"+key+"%")) {
-					line = line.replace("%"+key+"%", SERVER_VARIABLES.get(key));
-				}
-			}
+		if (!line.contains("%")) return line;
+		for (var entry : SERVER_VARIABLES.entrySet()) {
+			line = line.replace("%" + entry.getKey() + "%", entry.getValue());
 		}
 		return line;
 	}
@@ -175,7 +171,13 @@ public class Main extends JavaPlugin implements Listener {
 	public static void announcement(final Boolean center, String line) {
 		String manipulatedLine = "";
 
-		line = replaceVariable(line).trim(); // puts in variables such as website
+		line = replaceVariable(line).trim();
+		if (isPAPIEnabled && line.contains("%")) {
+			Player any = Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
+			if (any != null) {
+				line = PlaceholderAPI.setPlaceholders(any, line);
+			}
+		}
 		
 		if (line.contains("<command=")) {
 			final String cmd = StringUtils.substringBetween(line, "<command=", "/>");

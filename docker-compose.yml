@@ -1,0 +1,22 @@
+services:
+  mc:
+    image: itzg/minecraft-server
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: "1.20.4"
+      MEMORY: ${MC_MEMORY:-2G}
+      ONLINE_MODE: "FALSE"
+      ENABLE_COMMAND_BLOCK: "TRUE"
+      SPAWN_PROTECTION: 0
+      DIFFICULTY: easy
+      MAX_PLAYERS: 5
+      MOTD: "ServerTools E2E"
+      MODRINTH_PROJECTS: "luckperms,plugmanx,placeholderapi,vaultunlocked"
+      OPS: "reecepbcups"
+    volumes:
+      - ./server:/data
+    stdin_open: true
+    tty: true

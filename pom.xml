@@ -5,15 +5,14 @@
 
   <groupId>sh.reece</groupId>
   <artifactId>servertools</artifactId>
-  <version>7.0.4</version>
+  <version>7.1.0</version>
 
   <name>servertools</name>
   <url>https://reece.sh</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
   </properties>
 
   <repositories>
@@ -27,7 +26,7 @@
     </repository>
     <repository>
       <id>placeholderapi</id>
-      <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+      <url>https://repo.helpch.at/releases/</url>
     </repository>
     <!-- <repository>
       <id>bg-repo</id>
@@ -38,28 +37,17 @@
       <url>https://maven.enginehub.org/repo/</url>
     </repository>
 
-    <repository>
-      <id>com.springsource.repository.bundles.release</id>
-      <name>SpringSource Enterprise Bundle Repository - SpringSource Bundle Releases</name>
-      <url>http://repository.springsource.com/maven/bundles/release</url>
-  </repository>
-  <repository>
-      <id>com.springsource.repository.bundles.external</id>
-      <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
-      <url>http://repository.springsource.com/maven/bundles/external</url>
-  </repository>
-
   </repositories>
 
 
-  <dependencies>    
+  <dependencies>
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
       <version>1.18.2-R0.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
-     
+
 
     <!--  https://mvnrepository.com/artifact/me.lucko.luckperms/luckperms-api  -->
     <dependency>
@@ -79,7 +67,7 @@
     <dependency>
       <groupId>me.clip</groupId>
       <artifactId>placeholderapi</artifactId>
-      <version>2.10.10</version>
+      <version>2.12.2</version>
       <scope>provided</scope>
     </dependency>
     <!--   https://maven.enginehub.org/repo/com/sk89q/worldguard/worldguard-bukkit/  -->
@@ -107,10 +95,9 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>3.13.0</version>
         <configuration>
-            <source>${maven.compiler.source}</source>
-            <target>${maven.compiler.target}</target>
+            <release>${maven.compiler.release}</release>
         </configuration>
       </plugin>
     </plugins>

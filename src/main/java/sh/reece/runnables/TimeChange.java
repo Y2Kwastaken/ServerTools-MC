@@ -4,66 +4,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 
-public class TimeChange extends BukkitRunnable {
+public class TimeChange {
 
-	private static Main plugin;
-	private FileConfiguration config;
-	private String Section;
-	
-	List<World> dayWorlds, nightWorlds;
-	Boolean allWorlds;
-	int SecondSync;
-	
 	public TimeChange(Main instance) {
-        plugin = instance;
-        
-        Section = "Disabled.DisableTimeChange";                
-        if(plugin.enabledInConfig(Section+".Enabled")) {
-        	
-        	config = plugin.getConfig();	
+		String Section = "Disabled.DisableTimeChange";
+		if (instance.getConfigUtils().enabledInConfig(Section + ".Enabled")) {
+			List<World> dayWorlds = getNonNullWorlds(instance.getConfig().getStringList(Section + ".DayWorlds"));
+			List<World> nightWorlds = getNonNullWorlds(instance.getConfig().getStringList(Section + ".NightWorlds"));
 
-        	SecondSync = 1;//config.getInt(Section+".SecondSync");
-        	allWorlds = false; //config.getString(Section+".DayInAllWorlds").equalsIgnoreCase("true");
-        	dayWorlds = getNonNullWorlds(config.getStringList(Section+".DayWorlds"));
-        	nightWorlds = getNonNullWorlds(config.getStringList(Section+".NightWorlds"));        	
-
-        	runTaskTimer(plugin, 0, SecondSync*20);
-    	}
-	}		    		
-
-	
-	
-	@Override
-	public void run() {
-		if(allWorlds) {
-			Bukkit.getWorlds().stream().forEach(world -> world.setTime(4000));
-			return;
+			for (World w : dayWorlds) {
+				w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+				w.setTime(4000);
+			}
+			for (World w : nightWorlds) {
+				w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+				w.setTime(16000);
+			}
 		}
-		
-		dayWorlds.stream().forEach(world -> world.setTime(4000));
-		nightWorlds.stream().forEach(world -> world.setTime(16000));				
-		
 	}
-	
-	public List<World> getNonNullWorlds(List<String> worlds){
-		// worlds from String to Worlds
-		List<World> worldList = new ArrayList<>();		
 
-		worlds.stream().forEach(world -> {
-			if(Bukkit.getWorld(world) != null) {
-				worldList.add(Bukkit.getWorld(world));
+	private List<World> getNonNullWorlds(List<String> worlds) {
+		List<World> worldList = new ArrayList<>();
+		for (String world : worlds) {
+			World w = Bukkit.getWorld(world);
+			if (w != null) {
+				worldList.add(w);
 			} else {
 				Util.consoleMSG("&cWorld: " + world + " is not a world!");
 			}
-		});
-		
+		}
 		return worldList;
 	}
 }

@@ -1,41 +1,31 @@
 package sh.reece.disabled;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 
-public class DisableMobAI implements Listener {//, CommandExecutor {
+public class DisableMobAI extends ToggleableListener {
 
-	private static Main plugin;
-	private FileConfiguration MAINCONFIG;
-	private String Section;
-	private List<String> worlds;
+	private Set<String> worlds;
 
 	public DisableMobAI(Main instance) {
-		plugin = instance;        
-		Section = "Disabled.DisableMobAI";        
+		super(instance, "Disabled.DisableMobAI");
 
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-
-			MAINCONFIG = plugin.getConfig();               	
-			worlds = MAINCONFIG.getStringList(Section+".worldsToDisable");
-
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-
+		if (isEnabled()) {
+			worlds = new HashSet<>(plugin.getConfig().getStringList("Disabled.DisableMobAI.worldsToDisable"));
 		}
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void MobAI(EntityTargetLivingEntityEvent e) {
-		if (worlds.contains(e.getEntity().getLocation().getWorld().getName())) {
-			e.setCancelled(true); 
+		if (worlds.contains(e.getEntity().getWorld().getName())) {
+			e.setCancelled(true);
 		}
 	}
-	
+
 }

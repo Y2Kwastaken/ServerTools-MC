@@ -5,12 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Map.Entry;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -19,142 +16,96 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
+import sh.reece.utiltools.Util;
 
-public class WorldEffects implements Listener {// CommandExecutor
+public class WorldEffects extends ToggleableListener {
 
-	private static Main plugin;
-	//private FileConfiguration config;
-	private String Section;
+	// pre-resolved at init: WorldName -> [(PotionEffectType, level)]
+	private final Map<String, List<ResolvedEffect>> worldEffects = new HashMap<>();
 
-	// WorldName, <PotionEffectName, LevelEffect>
-	private Map<String, Map<String, Integer>> world_effect = new HashMap<String, Map<String, Integer>>();
-	// private HashMap<Player, Map<String, Integer>> affectedPlayers = new HashMap<Player, Map<String, Integer>>();
+	private final HashMap<UUID, List<String>> affectedPlayers = new HashMap<>();
 
-	// USER, World
-	private HashMap<UUID, List<String>> affectedPlayers = new HashMap<UUID, List<String>>();
-	
+	private record ResolvedEffect(PotionEffectType type, int level) {}
+
 	public WorldEffects(Main instance) {
-        plugin = instance;
-        
-        Section = "Events.WorldEffects";                
-        if(plugin.enabledInConfig(Section+".Enabled")) {
-    		  
-    		
-    		for(String wEff : plugin.getConfig().getStringList(Section+".worlds")) {
+		super(instance, "Events.WorldEffects");
+
+		if (isEnabled()) {
+			String Section = "Events.WorldEffects";
+			for (String wEff : instance.getConfig().getStringList(Section + ".worlds")) {
 				String[] wEffSplit = wEff.split(":");
 
 				int value = 1;
-				if(wEffSplit.length > 2) {									
-					try { // effect value level	
-						value = Integer.valueOf(wEffSplit[2]);
-					} catch (Exception e) {
-						Main.logging(wEffSplit[2] + " is not a valid number");
+				if (wEffSplit.length > 2) {
+					try {
+						value = Integer.parseInt(wEffSplit[2]);
+					} catch (NumberFormatException e) {
+						Util.log(wEffSplit[2] + " is not a valid number");
 					}
 				}
 
-				Map<String, Integer> eff = world_effect.get(wEffSplit[0]);
-				if(eff == null) {
-					eff = new HashMap<String, Integer>();
+				PotionEffectType type = PotionEffectType.getByName(wEffSplit[1].toUpperCase());
+				if (type == null) {
+					Util.log("Unknown potion effect: " + wEffSplit[1]);
+					continue;
 				}
 
-				eff.put(wEffSplit[1], value);
-
-				// adds the potion to the eff list, which is a list of all effects for a given world
-
-				// saves the new list to the world_effect map
-				world_effect.put(wEffSplit[0], eff);
-				Main.logging("WorldEffect: " + wEffSplit[0] + " " + wEffSplit[1] + " " + value);
+				worldEffects.computeIfAbsent(wEffSplit[0], k -> new ArrayList<>())
+					.add(new ResolvedEffect(type, value));
 			}
-
-			if(world_effect == null) {
-				Main.logging("No world effects found!!");
-				return;
-			}
-
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin); 
-			
 		}
-    	
 	}
-	
+
 	@EventHandler(ignoreCancelled = true)
-	public void playerChangeWorldEvent(PlayerChangedWorldEvent e) {	
+	public void playerChangeWorldEvent(PlayerChangedWorldEvent e) {
 		addEffect(e.getPlayer());
 	}
-	
+
 	@EventHandler(ignoreCancelled = true)
-	public void onJoin(PlayerJoinEvent e) {	
-		addEffect(e.getPlayer());				
+	public void onJoin(PlayerJoinEvent e) {
+		addEffect(e.getPlayer());
 	}
 
 	@EventHandler(ignoreCancelled = true)
-	public void onLeave(PlayerQuitEvent e) {	
-		removeEffect(e.getPlayer());				
+	public void onLeave(PlayerQuitEvent e) {
+		removeEffect(e.getPlayer());
 	}
 
 	@EventHandler(ignoreCancelled = true)
-	public void onKick(PlayerKickEvent e) {	
-		removeEffect(e.getPlayer());				
+	public void onKick(PlayerKickEvent e) {
+		removeEffect(e.getPlayer());
 	}
-	
-	
+
 	public void addEffect(Player p) {
 		String w = p.getWorld().getName();
-		
-		removeEffect(p); // removes precious effect from last world change, if any
-		
-		if(world_effect.containsKey(w)) {	
-			
-			// gets effects for world
-			Map<String, Integer> potionEffects = world_effect.get(w);
 
-			// iterates through all effects for a given world
-			for (String potionkey : potionEffects.keySet()) {
-				// String worldname = potionkey;
-				int value = potionEffects.get(potionkey);
+		removeEffect(p);
 
-				PotionEffectType potion = PotionEffectType.getByName(potionkey.toUpperCase());
-				p.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, value));
-				// affectedPlayers.put(p, potion);
-				
-				Main.logging("Added: " + potionkey + " to " + p.getName());
-			}
+		List<ResolvedEffect> effects = worldEffects.get(w);
+		if (effects == null) return;
 
-			// adds all potion effects to memory so we can clear on change / kick
-
-			List<String> worldsEffects = affectedPlayers.get(p.getUniqueId());
-			if(worldsEffects == null) {
-				worldsEffects = new ArrayList<String>();
-			}
-			worldsEffects.add(w);
-
-			affectedPlayers.put(p.getUniqueId(), worldsEffects);			
+		for (ResolvedEffect eff : effects) {
+			p.addPotionEffect(new PotionEffect(eff.type, Integer.MAX_VALUE, eff.level));
 		}
+
+		affectedPlayers.computeIfAbsent(p.getUniqueId(), k -> new ArrayList<>()).add(w);
 	}
-	
+
 	public void removeEffect(Player p) {
 		List<String> worlds = affectedPlayers.get(p.getUniqueId());
-		
-		if(worlds != null) {
 
-			for(String worldName : worlds) {
+		if (worlds != null) {
+			for (String worldName : worlds) {
+				List<ResolvedEffect> effects = worldEffects.get(worldName);
+				if (effects == null) continue;
 
-				if(!world_effect.containsKey(worldName)) {
-					Main.logging("No effects found for world: " + worldName);
-					return;
+				for (ResolvedEffect eff : effects) {
+					p.removePotionEffect(eff.type);
 				}
-	
-				for(Entry<String, Integer> effects : world_effect.get(worldName).entrySet()) {
-					PotionEffectType potion = PotionEffectType.getByName(effects.getKey().toUpperCase());
-					p.removePotionEffect(potion);
-					Main.logging("Removed: " + effects.getKey() + " from " + p.getName());
-				}					
 			}
 
 			affectedPlayers.remove(p.getUniqueId());
-
 		}
 	}
-	
-	
 }

@@ -55,8 +55,8 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 			if(sender.isOp()) {
 				sender.sendMessage("Posted all env variables to console");
 				Util.log("============ServerTools Env Variables===============");
-				for(String key : Main.ENV_VARIABLE_PATHS) {
-					Util.log(Main.getPathENVKey(key) + " = " + Main.resolveValue(key));
+				for(String key : ConfigUtils.ENV_VARIABLE_PATHS) {
+					Util.log(ConfigUtils.getPathENVKey(key) + " = " + ConfigUtils.resolveValue(key));
 				}
 				Util.log("===============================");
 			}
@@ -182,8 +182,11 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		if(args.length == 2) {
 			if(Arrays.asList("import", "restore").contains(args[0].toLowerCase())){
 				String path = plugin.getDataFolder() + File.separator + ConfigUtils.getInstance().getBackupDir();
-				if(new File(path).exists()){
-					for(File f : new File(path).listFiles()) {
+				File pathDir = new File(path);
+				if(pathDir.exists()){
+					File[] files = pathDir.listFiles();
+					if(files == null) return result;
+					for(File f : files) {
 						if(f.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
 							result.add(f.getName());
 						}
@@ -252,7 +255,7 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 
 		int numOfEnabled = 0;
 		int numOfDisabled = 0;
-		for(String element : plugin.modulesList){
+		for(String element : plugin.getConfigUtils().modulesList){
 
 			if(element.startsWith("&a")){
 				numOfEnabled++;
@@ -265,7 +268,7 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 			"\n&e&lServerTools &e"+plugin.getDescription().getVersion()+" &7&o((&f &aEnabled: "+numOfEnabled + " &f&l| &cDisabled: "+numOfDisabled + " &7&o))");
 
 		String moduleOuput = "";
-		for(final String module : plugin.modulesList) {
+		for(final String module : plugin.getConfigUtils().modulesList) {
 			moduleOuput += module;
 		}
 		Util.coloredMessage(sender, moduleOuput.replace("null", ""));

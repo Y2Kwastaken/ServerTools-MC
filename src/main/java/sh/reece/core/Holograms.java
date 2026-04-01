@@ -55,7 +55,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
         Section = "Misc.Holograms";
         randomPlayer = null;
 
-        if(plugin.enabledInConfig(Section+".Enabled")) {
+        if(plugin.getConfigUtils().enabledInConfig(Section+".Enabled")) {
 
 			configUtils = plugin.getConfigUtils();
 
@@ -94,9 +94,9 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
     	// on disable delete all armour stands at locations given in config
     	holoKeys = HoloConfig.getKeys(false); // [skyblock]
 
-    	if(papiSupport) { // && randomPlayer == null < not needed i dont think
-    		randomPlayer = Bukkit.getOnlinePlayers().stream().skip(0).findFirst().orElse(null);
-    		//Util.consoleMSG(randomPlayer+"");
+    	if(papiSupport) {
+    		var online = Bukkit.getOnlinePlayers();
+    		randomPlayer = online.isEmpty() ? null : online.iterator().next();
     	}
 
 		// spawn holograms only if holokeys has more than 1
@@ -163,7 +163,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 			return true;
 		}
 
-		if (!(sender.hasPermission(permission))) {
+		if (!sender.isOp() && !sender.hasPermission(permission)) {
 			sender.sendMessage(Util.color("&cNo Permission to use "+label+" :("));
 			return true;
 		}
@@ -290,7 +290,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		for(String line : getLinesFromConfig(key)) {
 			loc = loc.clone().subtract(0, 0.25, 0);
 
-			String msg = Util.color(Main.replaceVariable(line));
+			String msg = Util.color(ConfigUtils.replaceVariable(line));
 			if(papiSupport && randomPlayer != null) {
 				// sets a random online to be the msg.
 				// so this adds support for none player specific Placeholders like %server_uptime%

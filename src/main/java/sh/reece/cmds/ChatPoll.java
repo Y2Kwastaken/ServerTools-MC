@@ -8,21 +8,18 @@ import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-import sh.reece.tools.AlternateCommandHandler;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 
-public class ChatPoll implements Listener, CommandExecutor {
+public class ChatPoll extends BaseCommand implements Listener {
 
-	private static Main plugin;
-	private String Section;
 	//private HashMap<Player, String> v = new HashMap<Player, String>();
 	private List<String> votes = new ArrayList<String>();
 	private List<Player> playersVoted = new ArrayList<Player>();
@@ -30,16 +27,10 @@ public class ChatPoll implements Listener, CommandExecutor {
 	private int options; // numbers which can be used
 
 	public ChatPoll(Main instance) {
-		plugin = instance;
+		super(instance, "Commands.ChatPoll", "poll");
 
-		Section = "Commands.ChatPoll";
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-
-			plugin.getCommand("poll").setExecutor(this);
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
+		if(isEnabled()) {
 			pollRunning = false;
-		} else {
-			AlternateCommandHandler.addDisableCommand("poll");
 		}
 	}
 
@@ -55,7 +46,7 @@ public class ChatPoll implements Listener, CommandExecutor {
 	        if (max == null || e.getValue() > max.getValue())
 	            max = e;
 	    }
-	    return max.getKey();
+	    return max != null ? max.getKey() : null;
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -119,7 +110,11 @@ public class ChatPoll implements Listener, CommandExecutor {
 				Util.coloredMessage(p, "&cNo poll is running!");
 			} else {
 				pollRunning = false;
-				Util.coloredBroadcast("&a&lPOLL WINNER &a&n#" + mostCommon(votes));
+				if(votes.isEmpty()) {
+					Util.coloredBroadcast("&c&lPOLL ended with no votes!");
+				} else {
+					Util.coloredBroadcast("&a&lPOLL WINNER &a&n#" + mostCommon(votes));
+				}
 			}
 
 			return true;

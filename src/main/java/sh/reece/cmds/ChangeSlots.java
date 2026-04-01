@@ -1,11 +1,11 @@
 package sh.reece.cmds;
 
-import sh.reece.tools.AlternateCommandHandler;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
+import sh.reece.tools.Unloadable;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,23 +16,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
-public class ChangeSlots implements CommandExecutor, Listener {
+public class ChangeSlots extends BaseCommand implements Listener, Unloadable {
 
+	private static String announce;
 
-	private static String permission, announce;
-
-	private static Main plugin;
+	private static Main pluginRef;
 	public ChangeSlots(Main instance) {
-		plugin = instance;
+		super(instance, "Commands.ChangeSlots", "changeslots");
+		pluginRef = instance;
 
-		String section = "Commands.ChangeSlots";
-		if (plugin.enabledInConfig(section+".Enabled")) {
-			permission = plugin.getConfig().getString(section+".Permission");
-			announce = plugin.getConfig().getString(section+".AnnounceFullToPermissionedUsers");
-			plugin.getCommand("changeslots").setExecutor(this);
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-		} else {
-			AlternateCommandHandler.addDisableCommand("changeslots");
+		if (isEnabled()) {
+			announce = instance.getConfig().getString(section + ".AnnounceFullToPermissionedUsers");
 		}
 	}
 
@@ -40,11 +34,11 @@ public class ChangeSlots implements CommandExecutor, Listener {
 	public static void onJoin(PlayerJoinEvent e) {
 		if (announce.equalsIgnoreCase("true")) {
 			if (Bukkit.getServer().getOnlinePlayers().size() == Bukkit.getServer().getMaxPlayers()) {
-				Bukkit.broadcast(" ", permission);
-				Bukkit.broadcast(Util.color("&cServer is full! &7&o&n(( " + Bukkit.getServer().getMaxPlayers() + " ))"), permission);
-				Bukkit.broadcast(Util.color("&cBe sure to /changeslots if you want to allow more on!"), permission);
-				Bukkit.broadcast(Util.color("&7&o(( only users with " + permission + " see this message ))"), permission);
-				Bukkit.broadcast(" ", permission);
+				Bukkit.broadcast(" ", pluginRef.getConfig().getString("Commands.ChangeSlots.Permission"));
+				Bukkit.broadcast(Util.color("&cServer is full! &7&o&n(( " + Bukkit.getServer().getMaxPlayers() + " ))"), pluginRef.getConfig().getString("Commands.ChangeSlots.Permission"));
+				Bukkit.broadcast(Util.color("&cBe sure to /changeslots if you want to allow more on!"), pluginRef.getConfig().getString("Commands.ChangeSlots.Permission"));
+				Bukkit.broadcast(Util.color("&7&o(( only users with permission see this message ))"), pluginRef.getConfig().getString("Commands.ChangeSlots.Permission"));
+				Bukkit.broadcast(" ", pluginRef.getConfig().getString("Commands.ChangeSlots.Permission"));
 			}
 		}
 
@@ -55,8 +49,7 @@ public class ChangeSlots implements CommandExecutor, Listener {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-		if (!sender.hasPermission(permission)) {
-			sender.sendMessage("No permission: " + permission);
+		if (noPermission(sender, cmd)) {
 			return true;
 		}
 		if (args.length == 0) {
@@ -83,12 +76,46 @@ public class ChangeSlots implements CommandExecutor, Listener {
 		updateServerProperties();
 	}
 
+	@Override
+	public void onUnload() {
+		saveNewChangeSlotsPlayers();
+	}
+
 	private void changeSlots(int slots) throws ReflectiveOperationException {
 		Method serverGetHandle = plugin.getServer().getClass().getDeclaredMethod("getHandle");
 		Object playerList = serverGetHandle.invoke(plugin.getServer());
-		Field maxPlayersField = playerList.getClass().getSuperclass().getDeclaredField("maxPlayers");
+		Field maxPlayersField = findIntField(playerList, "maxPlayers");
 		maxPlayersField.setAccessible(true);
 		maxPlayersField.set(playerList, slots);
+	}
+
+	/**
+	 * Finds the maxPlayers int field by name across the class hierarchy.
+	 * Falls back to matching by current value if the field was renamed (e.g. Mojang mappings in 1.20.4+).
+	 */
+	private Field findIntField(Object playerList, String preferredName) throws ReflectiveOperationException {
+		// Try the preferred field name on each superclass first
+		for (Class<?> clazz = playerList.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
+			try {
+				Field f = clazz.getDeclaredField(preferredName);
+				if (f.getType() == int.class) return f;
+			} catch (NoSuchFieldException ignored) {}
+		}
+
+		// Field was renamed/obfuscated - find the int field whose value matches current max players
+		int currentMax = Bukkit.getServer().getMaxPlayers();
+		for (Class<?> clazz = playerList.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
+			for (Field f : clazz.getDeclaredFields()) {
+				if (f.getType() == int.class) {
+					f.setAccessible(true);
+					if (f.getInt(playerList) == currentMax) {
+						return f;
+					}
+				}
+			}
+		}
+
+		throw new ReflectiveOperationException("Could not find maxPlayers field in " + playerList.getClass().getName());
 	}
 
 	private static void updateServerProperties() {
@@ -109,8 +136,9 @@ public class ChangeSlots implements CommandExecutor, Listener {
 				throw throwable;
 			}
 
-			String maxPlayers = Integer.toString(plugin.getServer().getMaxPlayers());
-			if (properties.getProperty("max-players").equals(maxPlayers)) {
+			String maxPlayers = Integer.toString(pluginRef.getServer().getMaxPlayers());
+			String currentMax = properties.getProperty("max-players");
+			if (currentMax != null && currentMax.equals(maxPlayers)) {
 				return;
 			}
 			properties.setProperty("max-players", maxPlayers);

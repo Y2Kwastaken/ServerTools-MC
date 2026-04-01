@@ -11,26 +11,22 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 import sh.reece.utiltools.Util;
 
-public class ChatNumberGuesser implements Listener{
+public class ChatNumberGuesser extends ToggleableListener {
 
-	private static Main plugin;
 	private String command, AdminPerm;
 
 	public Boolean Running;
 	public Integer Number;
 
 	public ChatNumberGuesser(Main instance) {
-		plugin = instance;
+		super(instance, "Commands.ChatNumberGuess");
 
-		String section = "Commands.ChatNumberGuess";
-
-		if(plugin.enabledInConfig(section+".Enabled")) {
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-
-			command = "/"+plugin.getConfig().getString(section+".command");
-			AdminPerm = plugin.getConfig().getString(section+".AdminPerm");
+		if(isEnabled()) {
+			command = "/"+instance.getConfig().getString("Commands.ChatNumberGuess.command");
+			AdminPerm = instance.getConfig().getString("Commands.ChatNumberGuess.AdminPerm");
 			Running = false;
 		}
 	}
@@ -71,7 +67,7 @@ public class ChatNumberGuesser implements Listener{
 			}
 
 			if(args.length > 0) {
-				Number  = new Random().nextInt(100-1);
+				Number  = new Random().nextInt(100) + 1;
 				Util.coloredMessage(p, "&7&o(( random number " + Number + " chosen ))");
 
 				Running = true;

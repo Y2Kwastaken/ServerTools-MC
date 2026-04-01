@@ -1,39 +1,36 @@
 package sh.reece.disabled;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockFromToEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 
-public class DisableWaterBreakingRedstone implements Listener {
-	
-	
-	private List<String> items = new ArrayList<String>(); 
-	
-	private Main plugin;
+public class DisableWaterBreakingRedstone extends ToggleableListener {
+
+	private Set<Material> blockedMaterials;
+
 	public DisableWaterBreakingRedstone(Main instance) {
-		plugin = instance;
-		
-		if (plugin.enabledInConfig("Disabled.DisableWaterBreakingRedstone.Enabled")) {
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-			
+		super(instance, "Disabled.DisableWaterBreakingRedstone");
+
+		if (isEnabled()) {
+			blockedMaterials = new HashSet<>();
 			for(String s : plugin.getConfig().getStringList("Disabled.DisableWaterBreakingRedstone.items")) {
-				items.add(s.toUpperCase());
+				try {
+					blockedMaterials.add(Material.valueOf(s.toUpperCase()));
+				} catch (IllegalArgumentException ignored) {}
 			}
 		}
-			
-			
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onWaterFlow(BlockFromToEvent e) {
-		if (items.contains(e.getToBlock().getType().toString()))
-			e.setCancelled(true); 
+		if (blockedMaterials.contains(e.getToBlock().getType()))
+			e.setCancelled(true);
 	}
 
 

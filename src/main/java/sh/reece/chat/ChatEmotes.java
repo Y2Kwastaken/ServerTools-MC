@@ -1,61 +1,52 @@
 package sh.reece.chat;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import java.util.HashMap;
-
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 import sh.reece.utiltools.Util;
 
-public class ChatEmotes implements Listener {
+public class ChatEmotes extends ToggleableListener {
 
-	private static Main plugin;
-	private ConfigurationSection msgCfg;
 	private String permission;
-	private HashMap<String, String> emojiDict;
+	// parallel arrays avoid entrySet iterator allocation on every chat message
+	private String[] emojiKeys;
+	private String[] emojiValues;
 
 	public ChatEmotes(Main instance) {
-        plugin = instance;
+		super(instance, "Chat.ChatEmoji");
 
-        if(plugin.enabledInConfig("Chat.ChatEmoji.Enabled")) {
+		if (isEnabled()) {
+			permission = instance.getConfig().getString("Chat.ChatEmoji.permission");
 
-        	emojiDict = new HashMap<String, String>();
-        	permission = plugin.getConfig().getString("Chat.ChatEmoji.permission");
-
-    		// add all keys to memory on Enable
-    		msgCfg = plugin.getConfig().getConfigurationSection("Chat.ChatEmoji.Emojis");
-    		for(String key : msgCfg.getKeys(false)) {
-    			emojiDict.put(key, msgCfg.getString(key));
-    			//Util.consoleMSG(key + " -> " + msgCfg.getString(key));
-    		}
-
-    		Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-
-    	}
+			ConfigurationSection msgCfg = instance.getConfig().getConfigurationSection("Chat.ChatEmoji.Emojis");
+			Map<String, String> dict = new LinkedHashMap<>();
+			for (String key : msgCfg.getKeys(false)) {
+				dict.put(key, msgCfg.getString(key));
+			}
+			emojiKeys = dict.keySet().toArray(new String[0]);
+			emojiValues = dict.values().toArray(new String[0]);
+		}
 	}
-
 
 	@EventHandler(ignoreCancelled = true)
 	public void onChat(AsyncPlayerChatEvent event) {
 		String msg = event.getMessage();
 
-		if(permission.length()!=0 || !event.getPlayer().hasPermission(permission)) {
+		if (!permission.isEmpty() && !hasPermission(event.getPlayer())) {
 			return;
 		}
 
-		for (String key : emojiDict.keySet()) {
-			//Util.consoleMSG(key);
-
-		    if (msg.contains(key)) {
-		        msg = msg.replace(key, emojiDict.get(key));
-		    }
+		for (int i = 0; i < emojiKeys.length; i++) {
+			if (msg.contains(emojiKeys[i])) {
+				msg = msg.replace(emojiKeys[i], emojiValues[i]);
+			}
 		}
 		event.setMessage(Util.color(msg));
-
 	}
 }

@@ -1,35 +1,33 @@
 package sh.reece.disabled;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.LeavesDecayEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 
-public class DisableLeaveDecay implements Listener {
+public class DisableLeaveDecay extends ToggleableListener {
 
-	private static Main plugin;
-	 public List<String> LeaveDecayWorlds;
-	 
+	private Set<String> LeaveDecayWorlds;
+
 	public DisableLeaveDecay(Main instance) {
-	        plugin = instance;
-	        
-	        if (plugin.enabledInConfig("Disabled.DisableLeaveDecay.Enabled")) {
-	        	this.LeaveDecayWorlds = plugin.getConfig().getStringList("Disabled.DisableLeaveDecay.WorldsToDisable");	        	
-				Bukkit.getServer().getPluginManager().registerEvents(this, plugin);			
-			}
+		super(instance, "Disabled.DisableLeaveDecay");
+
+		if (isEnabled()) {
+			this.LeaveDecayWorlds = new HashSet<>(plugin.getConfig().getStringList("Disabled.DisableLeaveDecay.WorldsToDisable"));
+		}
 	}
-	
-	
+
+
 	@EventHandler(ignoreCancelled = true)
 	public void onDecay(LeavesDecayEvent e) {
-		if(LeaveDecayWorlds.contains(e.getBlock().getWorld().getName().toString())) {
+		if(LeaveDecayWorlds.contains(e.getBlock().getWorld().getName())) {
 			e.setCancelled(true);
 		}
-		
+
 	}
-	
+
 }

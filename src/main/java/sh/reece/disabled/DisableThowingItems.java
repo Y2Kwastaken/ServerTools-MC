@@ -1,46 +1,38 @@
 package sh.reece.disabled;
 
-import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import sh.reece.tools.ToggleableListener;
+import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class DisableThowingItems implements Listener {
+public class DisableThowingItems extends ToggleableListener {
 
-	private static Main plugin;
-	public List<String> itemsToStopThrowing;
-	private ConfigUtils configUtils;
-	
+	private Set<Material> itemsToStopThrowing;
+
 	public DisableThowingItems(Main instance) {
-		plugin = instance;
+		super(instance, "Disabled.DisableEntityThrowing");
 
-		if (plugin.enabledInConfig("Disabled.DisableEntityThrowing.Enabled")) {
-			configUtils = plugin.getConfigUtils();
-			itemsToStopThrowing = plugin.getConfig().getStringList("Disabled.DisableEntityThrowing.Items");
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
+		if (isEnabled()) {
+			itemsToStopThrowing = new HashSet<>();
+			for (String s : plugin.getConfig().getStringList("Disabled.DisableEntityThrowing.Items")) {
+				try {
+					itemsToStopThrowing.add(Material.valueOf(s.toUpperCase()));
+				} catch (IllegalArgumentException ignored) {}
+			}
 		}
 	}
 
-	
+
 	@EventHandler(ignoreCancelled = true)
 	public void stopEnder(PlayerInteractEvent e) {
-		if (e.getPlayer() instanceof Player) {
-			//Player p = e.getPlayer();
-
-			// if it has an index its in the array
-			if (itemsToStopThrowing.contains(e.getMaterial().toString())) {
-				e.getPlayer().sendMessage(configUtils.lang("DISABLED_THROWING_ITEMS"));
-				e.setCancelled(true);
-			}
-		
-						
-		} 
-		
+		if (itemsToStopThrowing.contains(e.getMaterial())) {
+			e.getPlayer().sendMessage(plugin.getConfigUtils().lang("DISABLED_THROWING_ITEMS"));
+			e.setCancelled(true);
+		}
 	}
-	
+
 }

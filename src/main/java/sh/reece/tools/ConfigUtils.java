@@ -7,7 +7,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -22,9 +26,16 @@ public class ConfigUtils {
 
 	private final HashMap<String, String> LANG = new HashMap<>();
 
-	private static final String VERSION_FILE = "VERSION.yml"; // in plugin
+	private static final String VERSION_FILE = "VERSION.yml";
 	private static final String BACKUP_FOLDER = "Backups";
 	private static final DateFormat dateFormat = new SimpleDateFormat("MMMM-dd-yyyy_HH:mm:ss-a");
+
+	// moved from Main
+	public static final Map<String, String> SERVER_VARIABLES = new HashMap<>();
+	public static final List<String> SERVER_VARIABLE_KEYS = new ArrayList<>();
+	public static final List<String> ENV_VARIABLE_PATHS = new ArrayList<>();
+	public final List<String> modulesList = new ArrayList<>();
+	private final Map<String, String> envCache = new HashMap<>();
 
 	public ConfigUtils(Main instance) {
 		plugin = instance;
@@ -41,48 +52,41 @@ public class ConfigUtils {
 	}
 
 	public void loadConfig() {
-		// check if file exist
-		// if yes, get version key from file & check against current version
-		// if version is different, zip plugin.getDataFolder() & save in the
-		// plugin.getDataFolder() /Backup directory
-		// if it does not exist, create file & save current version
-
-		// check if "VERSION.yml" exists in plugin.getDataDirectory()
-
 		FileConfiguration versionConfig = createConfig(VERSION_FILE);
 
-		// December-20-2021_10:14:53-AM
-		
 		String ver = plugin.getDescription().getVersion();
-
 		String verString = versionConfig.getString("version");
-		if (verString != null) {
-			if (!verString.equalsIgnoreCase(ver)) {				
-				Main.logging("Versions do not match " + verString + "->" + ver + ". Creating backup");
+		boolean versionChanged = verString == null || !verString.equalsIgnoreCase(ver);
+
+		if (versionChanged) {
+			if (verString != null) {
+				Util.log("Versions do not match " + verString + "->" + ver + ". Creating backup");
 				createBackup(null);
 			}
-		} 
+			versionConfig.set("version", ver);
+			saveConfig(versionConfig, VERSION_FILE);
+		}
 
-		// // update version to new version every reload
-		versionConfig.set("version", ver);
-		saveConfig(versionConfig, VERSION_FILE);
-
-		// BStats Metrics
-		new Metrics(plugin, 11289);
+		// BStats - defer to next tick so it doesn't block onEnable
+		Bukkit.getScheduler().runTaskLater(plugin, () -> new Metrics(plugin, 11289), 1L);
 
 		createConfig("config.yml");
 		plugin.getConfig().options().copyDefaults(true);
 
 		reloadLanguage(plugin.getConfig().getString("Language"));
 
-		try {
-			ConfigUpdater.update(plugin, "config.yml", new File(plugin.getDataFolder(), "config.yml"),
-					new ArrayList<String>());
-		} catch (final IOException e) {
-			e.printStackTrace();
+		// only re-merge config template when the plugin version changes
+		if (versionChanged) {
+			try {
+				ConfigUpdater.update(plugin, "config.yml", new File(plugin.getDataFolder(), "config.yml"),
+						new ArrayList<String>());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		_loadLocalServerVariableKeys();
+		_cacheEnvironmentOverrides();
 	}
 
 	
@@ -100,11 +104,11 @@ public class ConfigUtils {
 
 		String BACKUP_DIR = createDirectory(BACKUP_FOLDER).getAbsolutePath();
 		String BACKUP_PATH = BACKUP_DIR + File.separator + FileName + ".zip";
-		Main.logging(STOOLS_DIR + "->\n" + BACKUP_PATH);		
+		Util.log(STOOLS_DIR + "->\n" + BACKUP_PATH);		
 
 		boolean success_value = Util.zipFolder(STOOLS_DIR, BACKUP_PATH, ignoreFolders);
 							
-		// Main.logging("Backup complete");
+		// Util.log("Backup complete");
 		return new String[] {FileName + ".zip", Boolean.toString(success_value)};
 	}
 
@@ -119,24 +123,33 @@ public class ConfigUtils {
 	public String restoreBackup(String FileName){
 		String BACKUP_DIR = createDirectory(BACKUP_FOLDER).getAbsolutePath();
 		String BACKUP_PATH = BACKUP_DIR + File.separator + FileName + ".zip";
-		Main.logging("restoreBackup " + BACKUP_PATH);
+		Util.log("restoreBackup " + BACKUP_PATH);
 				
 		File backupFile = new File(BACKUP_PATH);
 		if(!backupFile.exists()){
-			Main.logging("Backup file does not exist");
+			Util.log("Backup file does not exist");
 			return "Backup file does not exist";
 		}
 
 		Util.unzipFile(BACKUP_PATH, plugin.getDataFolder().getAbsolutePath());
-		Main.logging("Restore complete");	
+		Util.log("Restore complete");	
 		return "&e[!] Restore Complete! Reloading configs...";
 	}
 	
 
 	private void _loadLocalServerVariableKeys() {
 		for (String key : plugin.getConfig().getConfigurationSection("PluginVariables").getKeys(false)) {
-			Main.SERVER_VARIABLES.put(key, plugin.getConfig().getString("PluginVariables." + key));
-			Main.SERVER_VARIABLE_KEYS.add(key);
+			SERVER_VARIABLES.put(key, plugin.getConfig().getString("PluginVariables." + key));
+			SERVER_VARIABLE_KEYS.add(key);
+		}
+	}
+
+	private void _cacheEnvironmentOverrides() {
+		String prefix = "SERVERTOOLS_";
+		for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+			if (entry.getKey().startsWith(prefix)) {
+				envCache.put(entry.getKey(), entry.getValue());
+			}
 		}
 	}
 
@@ -201,11 +214,58 @@ public class ConfigUtils {
 		}
 	}
 
-	// public HashMap<String, String> getlang(){
-	// return LANG;
-	// }
 	public String lang(final String key) {
 		return Util.color(LANG.get(key).replace("%prefix%", "&7[&eServerTools&7]&r"));
+	}
+
+	// enabledInConfig + env variable support (moved from Main)
+
+	public static String getPathENVKey(String path) {
+		return "SERVERTOOLS_" + path.toUpperCase(Locale.ROOT).replace('-', '_').replace('.', '_');
+	}
+
+	public static String resolveValue(String path) {
+		String key = getPathENVKey(path);
+		return System.getenv(key);
+	}
+
+	public boolean enabledInConfig(final String path) {
+		if (!plugin.getConfig().contains(path)) {
+			Util.consoleMSG(Util.color("&c[TOOLS] " + path + " does not exist!!!"));
+			modulesList.add("&4" + replaceUnNeededInfo(path) + "&f,&r ");
+			return false;
+		}
+
+		boolean isEnabled = plugin.getConfig().getString(path).equalsIgnoreCase("true");
+
+		// env variable override (from cached lookup)
+		String envKey = getPathENVKey(path);
+		String envValue = envCache.get(envKey);
+		if (envValue != null) {
+			Util.log(envKey + " set to: " + envValue);
+			isEnabled = envValue.equalsIgnoreCase("true");
+		}
+
+		ENV_VARIABLE_PATHS.add(path);
+		String color = isEnabled ? "&a" : "&c";
+		modulesList.add(color + replaceUnNeededInfo(path) + "&f,&r ");
+		return isEnabled;
+	}
+
+	public static String replaceVariable(String line) {
+		if (!line.contains("%")) return line;
+		for (var entry : SERVER_VARIABLES.entrySet()) {
+			line = line.replace("%" + entry.getKey() + "%", entry.getValue());
+		}
+		return line;
+	}
+
+	public static String replaceUnNeededInfo(String s) {
+		final String[] replace = {".Enabled", "Disabled.Disable", "Disabled.", "Events.", "Moderation.", "Cooldowns.", "Misc.", "Chat.", "Bungee.", "Commands.", "Core."};
+		for (final String key : replace) {
+			s = s.replace(key, "");
+		}
+		return s;
 	}
 
 }

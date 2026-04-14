@@ -172,7 +172,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
         item.setItemMeta(meta);
 
         if(Glowing) {
-        	item.addUnsafeEnchantment(Enchantment.DURABILITY, 1);
+        	item.addUnsafeEnchantment(Enchantment.UNBREAKING, 1);
         }
 
         return item;

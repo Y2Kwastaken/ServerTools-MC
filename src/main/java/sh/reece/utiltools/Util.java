@@ -607,9 +607,9 @@ public class Util {
 			if (m.isLegacy() || !m.isItem()) continue;
 			try {
 				ItemStack test = new ItemStack(m);
-				if (Enchantment.PROTECTION_ENVIRONMENTAL.canEnchantItem(test)) armour.add(m);
-				if (Enchantment.DAMAGE_ALL.canEnchantItem(test)) weapon.add(m);
-				if (Enchantment.DIG_SPEED.canEnchantItem(test)) tool.add(m);
+				if (Enchantment.PROTECTION.canEnchantItem(test)) armour.add(m);
+				if (Enchantment.SHARPNESS.canEnchantItem(test)) weapon.add(m);
+				if (Enchantment.EFFICIENCY.canEnchantItem(test)) tool.add(m);
 			} catch (Exception ignored) {}
 		}
 		ARMOUR_MATS = armour;

@@ -2,7 +2,7 @@
 
 Modular server management plugin for Paper/Spigot. 120+ commands and features that replace a whole stack of plugins with one jar. Toggle anything off in the config, disabled modules don't even register their listeners.
 
-Current version: **8.1.0** for MC **1.21.5** (Java 21).
+Current version: **8.1.1** for MC **1.21.5** (Java 21).
 
 [Spigot Page](https://www.spigotmc.org/resources/servertools-%E2%9E%9C-modular-server-management-1-8-1-21-open-source.95853/) | [Wiki](https://servertools.reece.sh/) | [Version History](https://www.spigotmc.org/resources/servertools-%E2%9E%9C-modular-server-management-1-8-1-21-open-source.95853/history)
 

@@ -347,8 +347,53 @@ public class Util {
 		CHAT_COLOR_OF = mh;
 	}
 
+	// <gradient:#ff0000:#0000ff>text</gradient> - 2+ colors, expanded to per-char &#hex
+	private static final Pattern GRADIENT_PATTERN = Pattern.compile("(?i)<gradient:(#[a-fA-F0-9]{6}(?::#[a-fA-F0-9]{6})+)>(.*?)</gradient>");
+
+	private static String applyGradients(String message) {
+		Matcher matcher = GRADIENT_PATTERN.matcher(message);
+		if (!matcher.find()) {
+			return message;
+		}
+		StringBuilder sb = new StringBuilder(message.length() + 64);
+		do {
+			String[] hexes = matcher.group(1).split(":");
+			matcher.appendReplacement(sb, Matcher.quoteReplacement(gradientText(matcher.group(2), hexes)));
+		} while (matcher.find());
+		matcher.appendTail(sb);
+		return sb.toString();
+	}
+
+	private static String gradientText(String text, String[] hexes) {
+		int len = text.length();
+		StringBuilder out = new StringBuilder(len * 8);
+		for (int i = 0; i < len; i++) {
+			char c = text.charAt(i);
+			if (c == ' ') {
+				out.append(c);
+				continue;
+			}
+			double pos = (len <= 1) ? 0 : (double) i / (len - 1);
+			out.append(interpolateHex(hexes, pos)).append(c);
+		}
+		return out.toString();
+	}
+
+	private static String interpolateHex(String[] hexes, double pos) {
+		int segments = hexes.length - 1;
+		int seg = Math.min((int) (pos * segments), segments - 1);
+		double t = pos * segments - seg;
+		int from = Integer.parseInt(hexes[seg].substring(1), 16);
+		int to = Integer.parseInt(hexes[seg + 1].substring(1), 16);
+		int r = (int) Math.round(((from >> 16) & 0xFF) + t * (((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)));
+		int g = (int) Math.round(((from >> 8) & 0xFF) + t * (((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)));
+		int b = (int) Math.round((from & 0xFF) + t * ((to & 0xFF) - (from & 0xFF)));
+		return String.format("&#%02x%02x%02x", r, g, b);
+	}
+
 	public static String color(String message) {
 		if (CHAT_COLOR_OF != null) {
+			message = applyGradients(message);
 			Matcher matcher = HEX_PATTERN.matcher(message);
 			if (matcher.find()) {
 				StringBuilder sb = new StringBuilder(message.length() + 32);

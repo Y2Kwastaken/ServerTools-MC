@@ -48,4 +48,9 @@ public class Main extends JavaPlugin implements Listener {
 	public ConfigUtils getConfigUtils() {
 		return configUtils;
 	}
+
+	// jar file name (e.g. "servertools-8.1.2.jar"), used so Plugman can load by jar
+	public String getJarFileName() {
+		return getFile().getName();
+	}
 }

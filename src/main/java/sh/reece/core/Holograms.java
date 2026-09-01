@@ -254,8 +254,14 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 				return true;
 
 			case "removenear":
-				Util.coloredMessage(p, "\n&aRemoved armour stands within a radius of 2\n ");
-				p.performCommand("minecraft:kill @e[type=armor_stand,r=2]");
+				int removed = 0;
+				for(Entity e : p.getNearbyEntities(2, 2, 2)) {
+					if(e instanceof ArmorStand && e.getLocation().distance(p.getLocation()) <= 2) {
+						e.remove();
+						removed++;
+					}
+				}
+				Util.coloredMessage(p, "\n&aRemoved " + removed + " armour stand(s) within a radius of 2\n ");
 				return true;
 
 			case "reload":
@@ -345,18 +351,24 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 
 
 	public void removeAllStands(){
-		//Entity[] grabEntities = getLocFromConfig(key).getChunk().getEntities();
-
-		for(Location locs : EntitiyIDs.keySet()) {
-			for(Entity e : locs.getWorld().getNearbyEntities(locs, 3, 5, 3)) {
-				if(e != null && e instanceof ArmorStand) {
-					if (e.isCustomNameVisible()) {
-						//Util.consoleMSG("Removed " + e.getCustomName() + " ID:" + e.getEntityId());
-						e.remove();
-					}
+		// clear based on config locations (not the in-memory map) so persisted
+		// stands from a previous run get removed too, preventing double-spawns on reload
+		for(String key : holoKeys) {
+			Location l = getLocFromConfig(key);
+			if(l == null) {
+				continue;
+			}
+			l.getChunk(); // force-load the chunk so persisted stands are found
+			// x/z radius must be non-zero: marker stands have a zero-width box and a
+			// zero-width search box never overlaps it, so they'd never get removed
+			for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
+				if(e instanceof ArmorStand && e.isCustomNameVisible()) {
+					//Util.consoleMSG("Removed " + e.getCustomName() + " ID:" + e.getEntityId());
+					e.remove();
 				}
 			}
 		}
+		EntitiyIDs.clear();
 	}
 
 	public void removeSingleKey(String key) {
@@ -369,7 +381,9 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 	public void hideHolo(String key) {
 		// removes armour stand from view in the server
 		Location l = getLocFromConfig(key);
-		for(Entity e : l.getWorld().getNearbyEntities(l, 0, 7, 0)) {
+		// non-zero x/z radius: marker stands have a zero-width box that a zero-width
+		// search box never overlaps, so they'd never get removed
+		for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
 			if(e instanceof ArmorStand) {
 				if (e.isCustomNameVisible()) {
 					e.remove();

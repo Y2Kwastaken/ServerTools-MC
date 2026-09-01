@@ -247,7 +247,9 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		Util.coloredMessage(sender, return_value);
 
 		if(return_value.contains("Reloading configs")){
-			Util.console("plugman reload ServerTools");
+			String jar = plugin.getJarFileName().replace(".jar", "");
+			Util.console("plugman unload ServerTools");
+			Util.console("plugman load " + jar);
 		}
 	}
 
@@ -295,7 +297,12 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 
 		if(Util.isPluginInstalledOnServer("Plugman", "ServerTools Reload")){
 			sender.sendMessage(Util.color("&a&lSERVER TOOLS RELOAD &7&o(Using Plugman)"));
-			Util.console("plugman reload ServerTools");
+			// `plugman reload` re-loads by plugin name and can't resolve us back to our jar,
+			// so it breaks. Unload by name, then load by jar file name instead - same as
+			// doing `plugman unload ServerTools` + `plugman load servertools-x.y.z` by hand.
+			String jar = plugin.getJarFileName().replace(".jar", "");
+			Util.console("plugman unload ServerTools");
+			Util.console("plugman load " + jar);
 		} else {
 			sender.sendMessage(Util.color("&c&lYou must install Plugman to use `/tools reload`"));
 		}

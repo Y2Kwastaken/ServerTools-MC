@@ -222,18 +222,18 @@ Everything is config-driven. Toggle any module on or off and reload.
 
 **Main**
 
-- `config.yml`
+- [`config.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/config.yml)
 
 **Optional**
 
-- `FeaturesGUI.yml` (Features GUI)
-- `Tags.yml`
-- `ScheduledTask.yml`
-- `Vouchers.yml` (Vouchers / Bundles)
-- `CommandProtect.yml` (Command Protection)
-- `Announcements.yml`
-- `Holograms.yml`, `Warps.yml`, `AntiCraft.yml`, `spawn.yml`
-- **[NEW]** Messages / translations
+- [`FeaturesGUI.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/FeaturesGUI.yml) (Features GUI)
+- [`Tags.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/Tags.yml)
+- [`ScheduledTask.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/ScheduledTask.yml)
+- [`Vouchers.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/Vouchers.yml) (Vouchers / Bundles)
+- [`CommandProtect.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/CommandProtect.yml) (Command Protection)
+- [`Announcements.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/Announcements.yml)
+- [`Holograms.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/Holograms.yml), [`Warps.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/Warps.yml), [`AntiCraft.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/AntiCraft.yml), [`spawn.yml`](https://github.com/reecepbcups/ServerTools-MC/blob/main/src/main/resources/spawn.yml)
+- **[NEW]** [Messages / translations](https://github.com/reecepbcups/ServerTools-MC/tree/main/src/main/resources/translations)
 
 ---
 

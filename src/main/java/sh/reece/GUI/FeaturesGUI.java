@@ -75,7 +75,17 @@ public class FeaturesGUI extends ToggleableListener {
 				name = DefaultItemNameColor + name;
 			}
 
-			createDisplay(featuresInv, Material.getMaterial(item.toUpperCase()), i, name, lores);
+			// legacy 1.8 material names in older configs return null on 1.18+, which
+			// would NPE new ItemStack(...) and kill the whole /features open. Fall back
+			// to the default item, and skip the slot if that's bad too.
+			Material material = Material.getMaterial(item.toUpperCase());
+			if (material == null) material = Material.getMaterial(DefaultItemIfNotSet.toUpperCase());
+			if (material == null) {
+				Util.consoleMSG("&e[FeaturesGUI] unknown material '" + item + "' for '" + key + "', skipping");
+				continue;
+			}
+
+			createDisplay(featuresInv, material, i, name, lores);
 			i += 1;
 		}
 

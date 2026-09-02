@@ -136,13 +136,15 @@ public class Loader {
 	}
 
 	private Map<String, List<Class<?>>> scanJar(Set<String> wantedPackages) {
-		Map<String, List<Class<?>>> index = new HashMap<>();
 		// pre-build path prefixes for fast filtering
 		Set<String> wantedPaths = new java.util.HashSet<>();
 		for (String pkg : wantedPackages) {
 			wantedPaths.add(pkg.replace('.', '/') + "/");
 		}
 
+		// pass 1: enumerate entries (cheap - just the central directory) and collect the
+		// class names we want, in jar order so instantiation order stays deterministic.
+		List<String[]> targets = new ArrayList<>(); // [packageName, className]
 		try {
 			URI jarUri = plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI();
 			try (JarFile jar = new JarFile(new File(jarUri))) {
@@ -160,14 +162,33 @@ public class Loader {
 
 					String packageName = name.substring(0, lastSlash).replace('/', '.');
 					String className = name.replace('/', '.').replace(".class", "");
-					try {
-						Class<?> clazz = Class.forName(className, false, plugin.getClass().getClassLoader());
-						index.computeIfAbsent(packageName, k -> new ArrayList<>()).add(clazz);
-					} catch (ClassNotFoundException | NoClassDefFoundError ignored) {}
+					targets.add(new String[]{packageName, className});
 				}
 			}
 		} catch (Exception e) {
 			Util.log("&cFailed to scan JAR: " + e.getMessage());
+			return new HashMap<>();
+		}
+
+		// pass 2: load classes in parallel. This is the expensive part (bytecode
+		// verification + linking); Paper's plugin classloader is parallel-capable, so
+		// forName(..., initialize=false) fans out safely across cores with no <clinit>
+		// side effects. Correct even if the loader ever serializes - just slower.
+		ClassLoader cl = plugin.getClass().getClassLoader();
+		Map<String, Class<?>> loaded = new java.util.concurrent.ConcurrentHashMap<>();
+		targets.parallelStream().forEach(t -> {
+			try {
+				loaded.put(t[1], Class.forName(t[1], false, cl));
+			} catch (ClassNotFoundException | NoClassDefFoundError ignored) {}
+		});
+
+		// pass 3: rebuild the per-package index in the original jar order
+		Map<String, List<Class<?>>> index = new HashMap<>();
+		for (String[] t : targets) {
+			Class<?> clazz = loaded.get(t[1]);
+			if (clazz != null) {
+				index.computeIfAbsent(t[0], k -> new ArrayList<>()).add(clazz);
+			}
 		}
 		return index;
 	}

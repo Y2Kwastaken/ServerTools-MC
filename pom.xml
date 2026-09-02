@@ -5,7 +5,7 @@
 
   <groupId>sh.reece</groupId>
   <artifactId>servertools</artifactId>
-  <version>8.2.0</version>
+  <version>8.3.1</version>
 
   <name>servertools</name>
   <url>https://reece.sh</url>
@@ -44,7 +44,7 @@
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
-      <version>1.21.5-R0.1-SNAPSHOT</version>
+      <version>1.21.11-R0.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
 
@@ -89,7 +89,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.10.2</version>
+      <version>5.11.3</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -118,7 +118,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
+        <version>3.5.2</version>
       </plugin>
     </plugins>
 

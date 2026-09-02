@@ -373,9 +373,16 @@ Chat:
 Events:
   AntiCraft:
     Enabled: false
+    # per-station toggles (block lists live in AntiCraft.yml)
+    Crafting: true
+    Anvil: true
+    Smithing: true
+    Grindstone: true
+    Enchanting: true
     AdminPerm: anticraft.admin
     Bypass: anticraft.bypass
-    MSG: '&c&l[!] &cYou do not have permission to craft &e%item%&c.'
+    # %action% is the blocked action (e.g. craft, use the anvil on)
+    MSG: '&c&l[!] &cYou do not have permission to %action% &e%item%&c.'
 
   StackUnstackables:
     Enabled: false
@@ -574,7 +581,6 @@ Misc:
     permission: tools.rename
     lorePermission: tools.rename.lore
     disabledRename:
-    - 'AIR'
     - 'EXPERIENCE_BOTTLE'
     - 'BEACON'
 

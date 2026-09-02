@@ -1,10 +1,11 @@
-jar_name := "servertools-8.2.0.jar"
+jar_name := "servertools-8.3.1.jar"
 output_dir := "../output"
 plugins_dir := "server/plugins"
 
 build:
-    mvn package -q -DskipTests
+    mvn -o -T1C package -DskipTests || mvn -T1C package -DskipTests
     mkdir -p {{plugins_dir}}
+    rm -f {{plugins_dir}}/servertools-*.jar
     cp {{output_dir}}/{{jar_name}} {{plugins_dir}}/{{jar_name}}
     @echo "deployed {{jar_name}} -> {{plugins_dir}}"
 
@@ -18,6 +19,12 @@ server-down:
 # send a command to the mc console (e.g. just mc-cmd "reload confirm")
 mc-cmd cmd:
     docker compose exec mc rcon-cli {{cmd}}
+
+# --- unit tests ---
+
+# run java unit tests (src/test/java/**) - no server needed
+test-unit:
+    mvn test
 
 # --- e2e tests ---
 

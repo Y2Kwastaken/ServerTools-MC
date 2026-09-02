@@ -1,6 +1,12 @@
 jar_name := "servertools-8.5.1.jar"
 output_dir := "../output"
 plugins_dir := "server/plugins"
+folia_plugins_dir := "server-folia/plugins"
+
+# separate compose projects so the paper + folia stacks never share a docker
+# network. (shared network = `down` on one breaks the other's container.)
+paper := "docker compose -p servertools-paper"
+folia := "docker compose -p servertools-folia -f docker-compose.folia.yml"
 
 build:
     mvn -o -T1C package -DskipTests || mvn -T1C package -DskipTests
@@ -9,16 +15,36 @@ build:
     cp {{output_dir}}/{{jar_name}} {{plugins_dir}}/{{jar_name}}
     @echo "deployed {{jar_name}} -> {{plugins_dir}}"
 
+# build once, deploy the same jar to BOTH the paper and folia test servers
+build-all: build
+    mkdir -p {{folia_plugins_dir}}
+    rm -f {{folia_plugins_dir}}/servertools-*.jar
+    cp {{output_dir}}/{{jar_name}} {{folia_plugins_dir}}/{{jar_name}}
+    @echo "deployed {{jar_name}} -> {{folia_plugins_dir}}"
+
 # start paper server (first run downloads paper + generates world)
 server-up:
-    docker compose up
+    {{paper}} up
 
 server-down:
-    docker compose down
+    {{paper}} down
+
+# --- folia test server (same jar, separate world; shares port 25565 so run one at a time) ---
+
+# start folia server (first run downloads folia + generates world)
+folia-up:
+    {{folia}} up
+
+folia-down:
+    {{folia}} down
+
+# send a command to the folia console (e.g. just folia-cmd "tps")
+folia-cmd cmd:
+    {{folia}} exec folia rcon-cli {{cmd}}
 
 # send a command to the mc console (e.g. just mc-cmd "reload confirm")
 mc-cmd cmd:
-    docker compose exec mc rcon-cli {{cmd}}
+    {{paper}} exec mc rcon-cli {{cmd}}
 
 # --- unit tests ---
 

@@ -10,10 +10,6 @@ Perfect for Skyblock, Factions, Survival, or Hub servers. Tested by over 6,000 u
 
 **Optional integrations:** [LuckPerms](https://luckperms.net/), [Vault](https://www.spigotmc.org/resources/vault.34315/), [PlaceholderAPI](https://hangar.papermc.io/HelpChat/PlaceholderAPI), [TAB](https://www.spigotmc.org/resources/tab-1-5-x-1-21-4.57806/), and [WorldGuard](https://enginehub.org/worldguard). All soft depends. ServerTools runs fine without them and lights up extra features when they're installed.
 
-<p align="center">
-  <img width="984" height="522" alt="ServerTools feature banner" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/feature-banner.png?raw=true" />
-</p>
-
 [![Spigot](https://img.shields.io/badge/Spigot-Resource-orange)](https://www.spigotmc.org/resources/servertools-%E2%9E%9C-modular-server-management-1-8-1-21-open-source.95853/)
 [![Hangar](https://img.shields.io/badge/Hangar-PaperMC-004ee9)](https://hangar.papermc.io/reecepbcups/ServerTools-MC)
 [![Modrinth](https://img.shields.io/badge/Modrinth-Download-1bd96a)](https://modrinth.com/plugin/servertools-mc)
@@ -51,6 +47,17 @@ Runs on **Paper** and **Spigot**.
 
 ## Features
 
+<p align="center">
+  <img width="640" alt="ServerTools feature banner" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/feature-banner.png?raw=true" />
+</p>
+
+Every module is browsable in-game through the Features GUI.
+
+<p align="center">
+  <img width="620" alt="Server Features GUI" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/features%20GUI.png?raw=true" />
+  <br/><em>The <code>/features</code> GUI - hover any item for what it does and how to use it</em>
+</p>
+
 ### Core commands (Essentials replacement)
 
 Fly, god, heal, repair, enchant, hat, invsee, enderchest, trash, workbench, speed, gamemode, tp, top, spawn, warps, compass, ping, messaging (msg/reply), nicknames, and realname. Full command and permission list is in the [Wiki](https://servertools.reece.sh/).
@@ -64,6 +71,16 @@ Chat formatting, emotes, chat cooldowns, join MOTD, MuteChat, ClearChat, plus **
   <br/><em>Chat Welcome Message (with PAPI support) and recurring timed announcements</em>
 </p>
 
+<p align="center">
+  <img width="560" alt="ChatColor and NameColor" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/namecolor%20and%20chatcolor.png?raw=true" />
+  <br/><em>Rainbow ChatColor from config and orange NameColor via <code>/namecolor</code> or GUI (hex supported)</em>
+</p>
+
+<p align="center">
+  <img width="560" alt="Chat polls" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/Polls.png?raw=true" />
+  <br/><em>Inline ChatPolls - players vote by typing their choice, winner announced automatically</em>
+</p>
+
 ### Moderation
 
 Freeze, reports, command spy, **Command Protection**, staff AFK, whitelist bypass, and admin chat.
@@ -71,6 +88,11 @@ Freeze, reports, command spy, **Command Protection**, staff AFK, whitelist bypas
 <p align="center">
   <img width="624" height="236" alt="Chat Moderation" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/chat-moderation.png?raw=true" />
   <br/><em>Chat moderation</em>
+</p>
+
+<p align="center">
+  <img width="500" alt="Staff AFK" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/StaffAFK.png?raw=true" />
+  <br/><em>Staff AFK auto-swaps the player's LuckPerms group while away, then restores it</em>
 </p>
 
 ### Holograms
@@ -86,6 +108,11 @@ HEX-colored & gradient holographic displays with placeholder support. Great for 
 
 Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackables.
 
+<p align="center">
+  <img width="500" alt="Withdraw and XP bottles" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/WITHDRAW%20and%20XPbottle.png?raw=true" />
+  <br/><em>Withdraw money and EXP into physical items, then redeem them back (stacked amounts supported)</em>
+</p>
+
 ### Rewards and cosmetics
 
 **Vouchers** and bundles, **Tags**, daily rewards, and **Launchpads**.
@@ -95,6 +122,11 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
   <br/><em>Tags that support full colors, hex, and gradients</em>
 </p>
 
+<p align="center">
+  <img width="500" alt="Voucher bundles" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/ReckaimVouchers.png?raw=true" />
+  <br/><em>Vouchers and bundles redeem for items, with one-time reclaim protection</em>
+</p>
+
 ### Server automation
 
 **AutoBroadcast**, **Custom Announcements**, **Scheduled Tasks**, and **Server-Age** (PAPI `%stools_age_<EPOCHTIME>%` ) tracking.
@@ -102,6 +134,11 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
 <p align="center">
   <img width="1335" height="268" alt="Custom Announcement" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/custom-announcement.png?raw=true" />
   <br/><em>Custom Announcement - format and replace entirely in the config (PAPI placeholders work as well)</em>
+</p>
+
+<p align="center">
+  <img width="520" alt="Donation broadcast" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/donation.png?raw=true" />
+  <br/><em>Auto-broadcast store purchases (Tebex/Buycraft friendly), fully formatted in the config</em>
 </p>
 
 ### Events
@@ -116,6 +153,16 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
 ### Utility
 
 **TPAll** (lagless), **ClearLag**, player **Visibility** toggles, join and leave messages, and PlaceholderAPI placeholders.
+
+<p align="center">
+  <img width="440" alt="Player visibility toggles" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/PlayerVisability.png?raw=true" />
+  <br/><em>Visibility toggles - show all, staff only, or hide everyone</em>
+</p>
+
+<p align="center">
+  <img width="440" alt="ClearLag countdown" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/countdown.png?raw=true" />
+  <br/><em>ClearLag counts down before it clears, so players get a heads-up</em>
+</p>
 
 ### Staff list
 

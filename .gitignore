@@ -23,11 +23,13 @@
 hs_err_pid*
 
 # Ignore private files
+.idea/
 .vscode/
 .settings/
 target/
 *.classpath
 *.project
+.claude/extern/
 
 # Local server data
 server/

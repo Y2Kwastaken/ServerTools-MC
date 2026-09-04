@@ -7,9 +7,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
@@ -40,6 +42,9 @@ public class ConfigUtils {
 	public static final List<String> SERVER_VARIABLE_KEYS = new ArrayList<>();
 	public static final List<String> ENV_VARIABLE_PATHS = new ArrayList<>();
 	public final List<String> modulesList = new ArrayList<>();
+	// paths already added to modulesList - stops duplicate entries when a path is
+	// checked from more than one place (e.g. HopperOptimizer + its command)
+	private final Set<String> listedPaths = new HashSet<>();
 	private final Map<String, String> envCache = new HashMap<>();
 
 	public ConfigUtils(Main instance) {
@@ -236,6 +241,11 @@ public class ConfigUtils {
 		}
 	}
 
+	public void clearModulesList() {
+		modulesList.clear();
+		listedPaths.clear();
+	}
+
 	public String lang(final String key) {
 		return Util.color(LANG.get(key).replace("%prefix%", "&7[&eServerTools&7]&r"));
 	}
@@ -254,7 +264,9 @@ public class ConfigUtils {
 	public boolean enabledInConfig(final String path) {
 		if (!plugin.getConfig().contains(path)) {
 			Util.consoleMSG(Util.color("&c[TOOLS] " + path + " does not exist!!!"));
-			modulesList.add("&4" + replaceUnNeededInfo(path) + "&f,&r ");
+			if (listedPaths.add(path)) {
+				modulesList.add("&4" + replaceUnNeededInfo(path) + "&f,&r ");
+			}
 			return false;
 		}
 
@@ -269,8 +281,10 @@ public class ConfigUtils {
 		}
 
 		ENV_VARIABLE_PATHS.add(path);
-		String color = isEnabled ? "&a" : "&c";
-		modulesList.add(color + replaceUnNeededInfo(path) + "&f,&r ");
+		if (listedPaths.add(path)) {
+			String color = isEnabled ? "&a" : "&c";
+			modulesList.add(color + replaceUnNeededInfo(path) + "&f,&r ");
+		}
 		return isEnabled;
 	}
 

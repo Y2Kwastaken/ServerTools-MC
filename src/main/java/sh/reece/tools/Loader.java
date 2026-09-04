@@ -212,7 +212,7 @@ public class Loader {
 
 	public void unloadAll() {
 		plugin.saveDefaultConfig();
-		plugin.getConfigUtils().modulesList.clear();
+		plugin.getConfigUtils().clearModulesList();
 		// Folia has no global cancelTasks(plugin); cancel the global + async schedulers
 		// (this also works on Paper). Per-entity/region tasks are cleaned up when the
 		// plugin disables, and each Unloadable cancels its own tasks below.

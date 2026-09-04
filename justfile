@@ -1,4 +1,4 @@
-jar_name := "servertools-8.5.1.jar"
+jar_name := "servertools-8.5.2.jar"
 output_dir := "../output"
 plugins_dir := "server/plugins"
 folia_plugins_dir := "server-folia/plugins"

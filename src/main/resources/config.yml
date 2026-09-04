@@ -453,7 +453,7 @@ Moderation:
 
   NoColonInCommands:
     Enabled: true
-    BypassPerm: colon.use
+    Permission: colon.use
 
   Freeze:
     Enabled: false

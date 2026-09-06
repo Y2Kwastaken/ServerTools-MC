@@ -1,4 +1,4 @@
-package sh.reece.core.warp.v2;
+package sh.reece.core.warp;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.slf4j.Logger;

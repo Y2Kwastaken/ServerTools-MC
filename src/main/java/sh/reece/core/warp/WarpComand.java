@@ -1,4 +1,4 @@
-package sh.reece.core.warp.v2;
+package sh.reece.core.warp;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -10,13 +10,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
-import sh.reece.utiltools.TextUtil;
+import sh.reece.utiltools.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
+
+import static sh.reece.utiltools.TextUtil.format;
 
 /**
  * The {@code /warp} command surface; the warps themselves live in {@link WarpFeature}.
@@ -75,14 +77,14 @@ public final class WarpComand extends BaseCommand {
     }
 
     private void teleport(final CommandSender sender, final String[] args) {
-        if (args.length == 0 || isInteger(args[0])) {
+        if (args.length == 0 || Util.isInt(args[0])) {
             list(sender);
             return;
         }
 
         final Optional<Warp> found = this.feature.warp(args[0]);
         if (found.isEmpty()) {
-            send(sender, NOT_A_WARP);
+            sender.sendMessage(format(NOT_A_WARP));
             return;
         }
         final Warp warp = found.get();
@@ -92,8 +94,8 @@ public final class WarpComand extends BaseCommand {
             if (self == null) {
                 return;
             }
-            if (!canUse(self, warp)) {
-                send(sender, NO_ACCESS, warp.name(), warp.permission());
+            if (!warp.canUse(self)) {
+                sender.sendMessage(format(NO_ACCESS, warp.name(), warp.permission()));
                 return;
             }
             arrive(self, warp, null);
@@ -101,35 +103,35 @@ public final class WarpComand extends BaseCommand {
         }
 
         if (!allows(sender, this.feature.configuration()::canWarpOthers)) {
-            send(sender, NO_PERMISSION_OTHERS);
+            sender.sendMessage(format(NO_PERMISSION_OTHERS));
             return;
         }
 
-        final Player target = Bukkit.getPlayerExact(args[1]);
+        final Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            send(sender, PLAYER_NOT_ONLINE, args[1]);
+            sender.sendMessage(format(PLAYER_NOT_ONLINE, args[1]));
             return;
         }
 
-        send(sender, TELEPORTING_OTHER, target.getName(), warp.name());
+        sender.sendMessage(format(TELEPORTING_OTHER, target.getName(), warp.name()));
         arrive(target, warp, sender.getName());
     }
 
     private void list(final CommandSender sender) {
         final var warps = this.feature.warps();
-        send(sender, LIST_HEADER, warps.size());
+        sender.sendMessage(format(LIST_HEADER, warps.size()));
 
         Component line = Component.empty();
         for (final Warp warp : warps) {
-            final boolean usable = !(sender instanceof Player player) || canUse(player, warp);
-            line = line.append(TextUtil.format(usable ? LIST_ENTRY : LIST_ENTRY_LOCKED, warp.name()));
+            final boolean usable = !(sender instanceof Player player) || warp.canUse(player);
+            line = line.append(format(usable ? LIST_ENTRY : LIST_ENTRY_LOCKED, warp.name()));
         }
         sender.sendMessage(line);
     }
 
     private void set(final CommandSender sender, final String[] args) {
         if (!allows(sender, this.feature.configuration()::canSetWarp)) {
-            send(sender, NO_PERMISSION);
+            sender.sendMessage(format(NO_PERMISSION));
             return;
         }
 
@@ -138,21 +140,21 @@ public final class WarpComand extends BaseCommand {
             return;
         }
         if (args.length == 0) {
-            send(sender, USAGE_SETWARP);
+            sender.sendMessage(format(USAGE_SETWARP));
             return;
         }
 
         final String name = args[0];
-        if (isInteger(name)) {
-            send(sender, WARP_NAME_NUMERIC);
+        if (Util.isInt(name)) {
+            sender.sendMessage(format(WARP_NAME_NUMERIC));
             return;
         }
         if (name.indexOf('.') >= 0) {
-            send(sender, WARP_NAME_DOTTED);
+            sender.sendMessage(format(WARP_NAME_DOTTED));
             return;
         }
         if (this.feature.warp(name).isPresent()) {
-            send(sender, WARP_ALREADY_SET);
+            sender.sendMessage(format(WARP_ALREADY_SET));
             return;
         }
 
@@ -160,79 +162,93 @@ public final class WarpComand extends BaseCommand {
         Warp.save(warps(), new Warp(name, permission, player.getLocation()), true);
         this.feature.load();
 
-        send(sender, WARP_SET, name);
+        sender.sendMessage(format(WARP_SET, name));
     }
 
     private void delete(final CommandSender sender, final String[] args) {
         if (!allows(sender, this.feature.configuration()::canDeleteWarp)) {
-            send(sender, NO_PERMISSION);
+            sender.sendMessage(format(NO_PERMISSION));
             return;
         }
         if (args.length == 0) {
-            send(sender, USAGE_DELWARP);
+            sender.sendMessage(format(USAGE_DELWARP));
             return;
         }
 
         final Optional<Warp> warp = this.feature.warp(args[0]);
         if (warp.isEmpty()) {
-            send(sender, WARP_DOES_NOT_EXIST);
+            sender.sendMessage(format(WARP_DOES_NOT_EXIST));
             return;
         }
 
         Warp.delete(warps(), warp.get(), true);
         this.feature.load();
 
-        send(sender, WARP_DELETED, args[0]);
+        sender.sendMessage(format(WARP_DELETED, args[0]));
     }
 
     private void info(final CommandSender sender, final String[] args) {
         if (!allows(sender, this.feature.configuration()::canViewWarps)) {
-            send(sender, NO_PERMISSION);
+            sender.sendMessage(format(NO_PERMISSION));
             return;
         }
         if (args.length == 0) {
-            send(sender, USAGE_WARPINFO);
+            sender.sendMessage(format(USAGE_WARPINFO));
             return;
         }
 
         final Optional<Warp> found = this.feature.warp(args[0]);
         if (found.isEmpty()) {
-            send(sender, WARP_NOT_FOUND, args[0]);
+            sender.sendMessage(format(WARP_NOT_FOUND, args[0]));
             return;
         }
         final Warp warp = found.get();
         final Location location = warp.location();
         final World world = location.getWorld();
 
-        send(sender, INFO_NAME, warp.name());
+        sender.sendMessage(format(INFO_NAME, warp.name()));
         if (!warp.permission().isBlank()) {
-            send(sender, INFO_PERMISSION, warp.permission());
+            sender.sendMessage(format(INFO_PERMISSION, warp.permission()));
         }
-        send(sender, INFO_LOCATION, world == null ? "unknown" : world.getName(),
-                location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        sender.sendMessage(format(INFO_LOCATION, world == null ? "unknown" : world.getName(),
+                location.getBlockX(), location.getBlockY(), location.getBlockZ()));
     }
 
     @Override
     public List<String> onTabComplete(final CommandSender sender, final Command cmd, final String label, final String[] args) {
-        final String action = label.toLowerCase(Locale.ROOT);
-        final boolean naming = action.equals("setwarp") || action.equals("addwarp");
-
-        if (args.length == 1) {
-            return naming ? List.of("<warp-name>") : startingWith(visibleTo(sender), args[0]);
-        }
-        if (args.length == 2 && naming) {
-            return List.of("[permission]");
-        }
-        return super.onTabComplete(sender, cmd, label, args);
+        return switch (label.toLowerCase(Locale.ROOT)) {
+            case "setwarp", "addwarp" -> switch (args.length) {
+                case 1 -> List.of("<warp-name>");
+                case 2 -> List.of("[permission]");
+                default -> List.of();
+            };
+            case "delwarp", "remwarp", "warpinfo" ->
+                    args.length == 1 ? startingWith(visibleTo(sender), args[0]) : List.of();
+            case "warps" -> List.of();
+            default -> switch (args.length) {
+                case 1 -> startingWith(visibleTo(sender), args[0]);
+                case 2 -> startingWith(onlinePlayerNames(), args[1]);
+                default -> List.of();
+            };
+        };
     }
 
     private List<String> visibleTo(final CommandSender sender) {
         final List<String> names = new ArrayList<>();
         for (final Warp warp : this.feature.warps()) {
-            if (!(sender instanceof Player player) || canUse(player, warp)) {
+            if (!(sender instanceof Player player) || warp.canUse(player)) {
                 names.add(warp.name());
             }
         }
+        return names;
+    }
+
+    private static List<String> onlinePlayerNames() {
+        final List<String> names = new ArrayList<>();
+        for (final Player player : Bukkit.getOnlinePlayers()) {
+            names.add(player.getName());
+        }
+        names.sort(null);
         return names;
     }
 
@@ -243,28 +259,15 @@ public final class WarpComand extends BaseCommand {
     private void arrive(final Player player, final Warp warp, final String sentBy) {
         player.teleportAsync(warp.location()).thenRun(() -> {
             if (sentBy == null) {
-                send(player, TELEPORTED, warp.name());
+                player.sendMessage(format(TELEPORTED, warp.name()));
             } else {
-                send(player, TELEPORTED_BY, warp.name(), sentBy);
+                player.sendMessage(format(TELEPORTED_BY, warp.name(), sentBy));
             }
         });
     }
 
-    private static boolean canUse(final Player player, final Warp warp) {
-        return warp.permission().isBlank() || player.hasPermission(warp.permission());
-    }
-
     private static boolean allows(final CommandSender sender, final Predicate<Player> node) {
         return !(sender instanceof Player player) || node.test(player);
-    }
-
-    private static boolean isInteger(final String value) {
-        try {
-            Integer.parseInt(value);
-            return true;
-        } catch (final NumberFormatException e) {
-            return false;
-        }
     }
 
     private static List<String> startingWith(final Iterable<String> candidates, final String prefix) {
@@ -276,9 +279,5 @@ public final class WarpComand extends BaseCommand {
             }
         }
         return matches;
-    }
-
-    private static void send(final CommandSender to, final String template, final Object... placeholders) {
-        to.sendMessage(TextUtil.format(template, placeholders));
     }
 }
